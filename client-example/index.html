@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="/node_modules/socket.io-client/dist/socket.io.js"></script>
+    <title>Messenger</title>
+</head>
+<body>
+    <div id="messages"></div>
+    <form id="form-message" action="#">
+        <input type="text" id="message" placeholder="Write a message...">
+    </form>
+    <script>
+        const socket = io('http://localhost:3000')
+        const $messages = document.querySelector('#messages')
+        const $form = document.querySelector('#form-message')
+        const $message = document.querySelector('#message')
+        const client = {
+            username: 'MadDeveloper',
+            id: null
+        }
+
+        $form.addEventListener('submit', event => {
+            const message = $message.value
+            
+            event.preventDefault();
+            sendMessage(message)
+            $message.value = ''
+        })
+
+        socket.on('connect', connectUser)
+
+        socket.on('info connection', data => client.id = data.id)
+
+        socket.on('member connect', user => $messages.innerHTML += `<div>${user.username} is now online</div>`)
+
+        socket.on('message', data => {
+            $messages.innerHTML += `<div>
+                <strong>${data.username}</strong>
+                <span style="margin-left: 10px">${data.message}</span>
+            </div>`
+        })
+
+        socket.on('member disconnect', user => $messages.innerHTML += `<div>${user.username} is now offline</div>`)
+
+        function sendMessage(message) {
+            socket.emit('send', {
+                message
+            })
+        }
+
+        function connectUser() {
+            socket.emit('connection', {
+                username: client.username
+            })
+        }
+    </script>
+</body>
+</html>
